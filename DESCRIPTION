@@ -4,7 +4,14 @@ Title: A package to generate visualisations and occurrence scores from stratigra
 Version: 0.1
 Date: 2016-02-25
 Authors@R: person("John", "Shekeine", email = "shekeinespere@gmail.com", role = c("aut", "cre"))
-Description:This package provides plotting functions to construct standard stratigraphic plots based on the Grammar of Graphics implementation in R i.e., ggplot2. Most importantly, it facilitates the creation of multi-facetted plots where fine control of plot parameters e.g. axis breaks and labels, relative sizes of multiple facets is possible. Plots aesthetics can be controlled easily using the traditional layering paradigm of ggplot2. The package also provides several functions to compute occurrence scores of stratigraphic data e.g. biome and plant functional type scores based on pollen data. For efficiency, all the data wrangling in this package is based on data.table.
+Description: This package provides plotting functions to construct standard stratigraphic plots
+    based on the Grammar of Graphics implementation in R i.e., ggplot2. Most importantly,
+    it facilitates the creation of multi-facetted plots where fine control of plot parameters
+    e.g. axis breaks and labels, relative sizes of multiple facets is possible.
+    Plots aesthetics can be controlled easily using the traditional layering paradigm of ggplot2.
+    The package also provides several functions to compute occurrence scores of stratigraphic data e.g.
+    biome and plant functional type scores based on pollen data.
+    For efficiency, all the data wrangling in this package is based on data.table.
 Depends:
     R (>= 3.1)
 Imports:
