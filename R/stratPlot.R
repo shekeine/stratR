@@ -19,6 +19,12 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
                       ylab='Time variable',
                       pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')){
 
+environment(stratPlot_varlist) <- environment()
+environment(stratPlot_var) <- environment()
+environment(grp_labStrip) <- environment()
+environment(uniYaxis) <- environment()
+
+
               #Attempt loading required libs
               lapply(c("data.table", "ggplot2", "gridExtra", "grid", 'gtable', 'RColorBrewer'), require, character.only=T)
 
@@ -26,6 +32,7 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
               setnames(x=dat, old=c(tymcol, varcol, valcol, grpcol), new=c('agebp', 'variable', 'value', 'group'))
 
               #Remove variables (taxa) that do not occur at least once
+              print(class(dat))
               dat <- dat[, ntNA:=sum(!is.na(value)), by=variable]
               dat <- dat[ntNA>0]
               dat[, ntNA:=NULL]
@@ -52,7 +59,7 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
                   dt_col <- data.table(group=grp_ord, col=gcols)
 
                   #Fun to make grp_labs
-                  source('fun/grp_labStrip.R', local=T)
+                  #source('fun/grp_labStrip.R', local=T)
 
                   #Get height needed for all facet titles
                   dt_strip <- data.table(vnames=unique(dat[, variable]))

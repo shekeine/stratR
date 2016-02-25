@@ -7,4 +7,5 @@ A package to visualize and analyse pollen stratigraphic data based on ggplot2 an
 install.packages("devtools")
 library(devtools)
 install_github("shekeine/stratR")
+library(stratR)
 ```

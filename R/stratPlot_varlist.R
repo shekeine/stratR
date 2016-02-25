@@ -7,6 +7,7 @@ stratPlot_varlist <- function(dat_grpL){
 
                               #Apply stratplot_i over variables in i'th group
                               #source("fun/stratPlot_var.R", local=T)
+
                               gglist <- lapply(X=dat_grpL, FUN=stratPlot_var)
 
                               #Order gglist plots by group and maxv

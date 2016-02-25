@@ -13,13 +13,13 @@ Description: This package provides plotting functions to construct standard stra
     biome and plant functional type scores based on pollen data.
     For efficiency, all the data wrangling in this package is based on data.table.
 Depends:
-    R (>= 3.1)
+    R (>= 3.1),
+    data.table
 Imports:
     ggplot2,
     grid,
     gridExtra,
     gtable (>= 0.1.1),
-    data.table,
     reshape2,
     RColorBrewer
 License: GPL-2
