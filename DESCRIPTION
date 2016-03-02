@@ -14,13 +14,14 @@ Description: This package provides plotting functions to construct standard stra
     For efficiency, all the data wrangling in this package is based on data.table.
 Depends:
     R (>= 3.1),
-    data.table
-Imports:
+    data.table,
+    grid,
     ggplot2,
     grid,
     gridExtra,
     gtable (>= 0.1.1),
     reshape2,
     RColorBrewer
+Imports:
 License: GPL-2
 LazyData: TRUE
