@@ -37,7 +37,7 @@ Name of column that contains values of each variable
 }
   \item{varord}{
 How should variables be ordered?, "alph" for alphabetically, "med" for ordering
-based on relative abundances (determined by from medians) of the variables.
+based on relative abundances (based on medians) of the variables.
 }
 
   \item{grp_ord}{

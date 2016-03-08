@@ -127,13 +127,14 @@ stratPlot <- function(dat=dat,
                   #All plots/variables whose plots have constant width should have the same ylim2
                   #this will be the group-wise maximum to accomodate all vars
                   dat_ctrl[group%in%const_grps, ylim2:=max(ylim2), .(group)]
-                  aa<<-dat_ctrl
 
                 #Split input data into variable-wise list
                 dat_var <- lapply(X=split(1:nrow(dat), f=as.character(dat[, variable])), FUN=function(x)dat[x])
 
                 #Graph each variable (group-wise)
-                gglist  <- stratPlot_varlist(dat_var)
+                gglist <- stratPlot_varlist(dat_var)
+                glab_ht <- gglist$glab_ht
+                gglist  <- stratPlot_varlist(dat_var)$grob_grp
 
             #Add universal y axis
              #Determine strip text height of y axis plot==sum of heights of group & strip.heights
