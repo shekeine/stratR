@@ -3,13 +3,13 @@ stratPlot <- function(dat=dat,
                       tymcol='agebp',
                       varcol='variable',
                       valcol='value',
-                      varord=c('alph', 'range'),
+                      varord=c('alph', 'med')[1],
 
-                      grp_ord=c('Trees', 'Shrub', 'Herb'),
+                      grp_ord=unique(dat[, group]),
                       grpcol='group',
                       grpgeom=c('area', 'line')[1],
-                      grp_vartype=c('Percentage', 'Count', 'SD'),
-                      const_grps='',
+                      grp_vartype='',
+                      const_grps=NULL,
                       gcols=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
 
                       xlim1=NULL,
@@ -74,9 +74,14 @@ stratPlot <- function(dat=dat,
                 strip_height   <- as.numeric(gt_strip[['grobs']][[1]][['heights']][3])
 
               #Variable-wise parameters
-                #Make Ctrl table with each variable's maximum rate of occurence
+                #Make Ctrl table with each variable's maximum rate of occurence: used 2set plot extent and labels
                 dat_ctrl <- dat[, max(value, na.rm=T), by=c('group', 'variable')]
                 setnames(dat_ctrl, 'V1', 'maxv')
+
+                #Add median
+                dt1 <- dat[, median(value, na.rm=T), by=c('group', 'variable')]
+                setnames(dt1, 'V1', 'med')
+                dat_ctrl <- merge(dat_ctrl, dt1, by=c('group', 'variable'))
 
                 #xbline: baseline position along x. This is actually a y coordinate with coord_flip()
                 #If undefined, compute it from each variable's median
@@ -92,27 +97,29 @@ stratPlot <- function(dat=dat,
                 #Define group levels: determines ordering of groups
                 dat_ctrl[, group:=factor(dat_ctrl$group, levels=grp_ord, ordered=T)]
 
-                #Order variables by group, then by maxv or alphabetically depending on varord
-                ordby <- ifelse(varord[1]=='alph', 'variable', 'maxv')
+                #Order variables by group, then by med or alphabetically depending on varord
+                ordby <- ifelse(varord[1]=='alph', 'variable', 'med')
                 dir   <- ifelse(ordby=='variable', 1, -1)
                 setorderv(x=dat_ctrl, cols=c('group', ordby), order=c(1, dir))
 
                 #Make DT withvalue break specs
                 vbrk_dt <- data.table(group=unique(dat_ctrl[, group]), ylim1, xbrkint)
 
-                #Determine relative sizes of variable facets (in cm) from maxv
+                #Determine relative sizes of variable facets (in cm) based on relative abundances (median)
 
                   #Set plot width (cm's) of variable with highest maxv
                   #Set constant plot width for groups whose plots are not to be scaled
                   maxw  <- 5
-                  constw <- 5/2
+                  constw <- 5/3
 
                   #ylim[2] of each variable will be maxv rounded up to the nearest 5
-                  dat_ctrl[, ylim1:=0]
                   dat_ctrl[, ylim2:=roundUp(x=maxv,to=5)]
 
-                  #Width of each variable's facet is maxw factored by that variable's maxv/global ylim[2]
-                  dat_ctrl[, pwidth:=(ylim2/max(dat_ctrl[, ylim2]))*maxw]
+                  #Width of each variable's facet is maxw factored by that variable's med/global med
+                  dat_ctrl[, pwidth:=(med/max(dat_ctrl[, med]))*maxw]
+
+                  #set pwidths that are too low to some constant
+                  dat_ctrl[pwidth < 0.5, pwidth:=0.5]
 
                   #Set plot width of unscaled graphs to half the maximum plot size
                   dat_ctrl[group%in%const_grps, pwidth:=constw]
@@ -120,6 +127,7 @@ stratPlot <- function(dat=dat,
                   #All plots/variables whose plots have constant width should have the same ylim2
                   #this will be the group-wise maximum to accomodate all vars
                   dat_ctrl[group%in%const_grps, ylim2:=max(ylim2), .(group)]
+                  aa<<-dat_ctrl
 
                 #Split input data into variable-wise list
                 dat_var <- lapply(X=split(1:nrow(dat), f=as.character(dat[, variable])), FUN=function(x)dat[x])

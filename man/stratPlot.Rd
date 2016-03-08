@@ -36,8 +36,8 @@ Name of column that contains the variable labels
 Name of column that contains values of each variable
 }
   \item{varord}{
-How should variables be ordered?, "alph" for alphabetically, "range" for ordering
-based on relative ranges of the variables.
+How should variables be ordered?, "alph" for alphabetically, "med" for ordering
+based on relative abundances (determined by from medians) of the variables.
 }
 
   \item{grp_ord}{

@@ -25,7 +25,9 @@ grp_labStrip <- function(dt_col, labcol, tsize, usecol=T){
                                         axis.title.y=element_blank(),
                                         strip.text=element_text(size=tsize,
                                                                 colour=ifelse(usecol, 'black', tcol)),
-                                        strip.background=eval(parse(text=ifelse(usecol, "element_rect(fill=tcol, colour=tcol)", "element_blank()")))
+                                        strip.background=eval(parse(text=ifelse(usecol,
+                                                                                "element_rect(fill=tcol, colour=tcol)",
+                                                                                "element_rect(fill='transparent', colour='transparent')")))
                                       )
                             lab_grob <- arrangeGrob(gg_lab)$grobs[[1]][3,]
                             return(lab_grob)

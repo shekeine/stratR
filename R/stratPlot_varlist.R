@@ -8,7 +8,7 @@ stratPlot_varlist <- function(dat_grpL){
                               #Apply stratplot_i over variables in i'th group
                               gglist <- lapply(X=dat_grpL, FUN=stratPlot_var)
 
-                              #Order gglist plots by group and maxv
+                              #Order gglist plots by group and median
                               gglist <- gglist[as.character(dat_ctrl[, variable])]
 
                               #Stitch result into one plot with all variables (taxa) in i'th group
