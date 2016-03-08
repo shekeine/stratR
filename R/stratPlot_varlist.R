@@ -15,8 +15,9 @@ stratPlot_varlist <- function(dat_grpL){
                                 #Make stitch args
                                 args.list <- list(ncol=length(gglist), widths=lapply(c(dat_ctrl[, pwidth]), unit, "cm"))
 
-                                #Stitch
-                                grob_grp   <- do.call(arrangeGrob, c(gglist, args.list))
+                                #Stitch, message "Each group consists of only 1 observation..." supressed
+                                #by suppressMessages(), since group=1 in the constituent grobs doesn't supress it
+                                grob_grp  <- suppressMessages(do.call(arrangeGrob, c(gglist, args.list)))
 
                               #Make every title space(strip.text) have the height of the tallest title space (i.e. longest var label)
                               for(nm in names(gglist)){
@@ -30,13 +31,27 @@ stratPlot_varlist <- function(dat_grpL){
                               #Reverse z index to allow left-right overlap
                               grob_grp$layout$z <- rev(grob_grp$layout$z)
 
-                              #Make labeller plot
-                              tstrip <- grp_labStrip(dt_col)
+                              #Make group labeller strip
+                              tstrip <- grp_labStrip(dt_col, labcol='group', tsize=grp_tsize)
+
+                              #Plot label
+                              if(nchar(plab) > 1){
+                                 plab_grob <- textGrob(label=plab, gp=gpar(fontsize=ptt_tsize, fontface='bold', col="grey30"))
+                                 gg_grob <- arrangeGrob(gg_grob, top=plab_grob, padding=unit(0.5, units='cm'))
+                              }
 
                               #Append group labels as a top strip
                                 #Get height of strip
-                                glab_ht <- unit((as.numeric(tstrip$grobs[[1]]$heights)), 'cm')
+                                glab_ht <<- unit((as.numeric(tstrip$grobs[[1]]$heights)), 'cm')
                                 grob_grp <- arrangeGrob(grob_grp, top=tstrip, clip=F, padding=glab_ht)
+
+                                ##Make variable type labeller strip
+                                if(length(grp_vartype) >= 1){
+                                 bstrip <- grp_labStrip(dt_col, labcol='vartype', tsize=axs_tsize, usecol=F)
+                                 vtyp_ht <- unit((as.numeric(bstrip$grobs[[1]]$heights)), 'cm')
+                                 grob_grp <- arrangeGrob(grob_grp, bstrip, ncol=1,
+                                                         heights=unit.c(unit(1, 'null'), vtyp_ht), padding = unit(0, "cm"))
+                                }
 
                               #Add right margin to ensure that last label fits in the plot
                               #margin width assumes that each char of the final plot's label takes up 0.2cm

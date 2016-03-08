@@ -1,11 +1,19 @@
 #Call helper functions
-stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
+stratPlot <- function(dat=dat,
                       tymcol='agebp',
                       varcol='variable',
                       valcol='value',
+                      varord=c('alph', 'range'),
+
+                      grp_ord=c('Trees', 'Shrub', 'Herb'),
                       grpcol='group',
+                      grpgeom=c('area', 'line')[1],
+                      grp_vartype=c('Percentage', 'Count', 'SD'),
+                      const_grps='',
                       gcols=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
 
+                      xlim1=NULL,
+                      xbline=NULL,
                       xbrkint=5,
                       ybrkint=500,
 
@@ -15,7 +23,6 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
                       ptt_tsize=25,
 
                       plab='',
-                      xlab='',
                       ylab='Time variable',
                       pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')){
 
@@ -39,6 +46,7 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
               setkey(dat)
 
             #Make plotting parameters
+
               #Global parameters
                 #Y axis expansion factor
                 expF <- c(0, 0)
@@ -48,14 +56,16 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
                 tym_labs <- tym_brks + rep(c(NA, 0), length.out=length(tym_brks))
                 tym_labs[is.na(tym_labs)] <- ''
 
-                #Define range within which variable values, hence axis breaks and labels can possibly occur
-                labsr <- seq(0, 100, 10)
+                #xlim1: left extent of plots in each group. This is actually ylim1 with coord_flip()
+                if(!length(xlim1)){
+                  dt1 <- dat[, min(value, na.rm=T), .(group)][group%in%grp_ord, ]
+                  dt1[, xbrkint:=xbrkint] ; setnames(dt1, 'V1', 'gmin')
+                  ylim1 <- dt1[, round_any(gmin, xbrkint, floor)]
+                }else{ylim1 <- xlim1}
 
-                #Colours to group higher levels by (including y axis)
-                dt_col <- data.table(group=grp_ord, col=gcols)
-
-                #Fun to make grp_labs
-                #source('fun/grp_labStrip.R', local=T)
+                #Collect group-level parameters
+                dt_col <- data.table(group=grp_ord, col=gcols,
+                                     vartype=grp_vartype, geom=grpgeom, ylim1=ylim1)
 
                 #Get height needed for all facet titles
                 dt_strip <- data.table(vnames=unique(dat[, variable]))
@@ -68,21 +78,48 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
                 dat_ctrl <- dat[, max(value, na.rm=T), by=c('group', 'variable')]
                 setnames(dat_ctrl, 'V1', 'maxv')
 
-                #Order by factor and maxv
+                #xbline: baseline position along x. This is actually a y coordinate with coord_flip()
+                #If undefined, compute it from each variable's median
+                #If defined (should be done at group level), merge to match with respective variables
+                if(!length(xbline)){
+                  dt1 <- dat[, median(value, na.rm=T), .(variable)]
+                  setnames(dt1, 'V1', 'xbline')
+                  dat_ctrl <- merge(dat_ctrl, dt1, by='variable')
+                }else{
+                  dat_ctrl <- merge(dat_ctrl, data.table(group=grp_ord, xbline), by='group')
+                }
+
+                #Define group levels: determines ordering of groups
                 dat_ctrl[, group:=factor(dat_ctrl$group, levels=grp_ord, ordered=T)]
-                dat_ctrl <- dat_ctrl[with(dat_ctrl, order(+as.numeric(group), -maxv))]
+
+                #Order variables by group, then by maxv or alphabetically depending on varord
+                ordby <- ifelse(varord[1]=='alph', 'variable', 'maxv')
+                dir   <- ifelse(ordby=='variable', 1, -1)
+                setorderv(x=dat_ctrl, cols=c('group', ordby), order=c(1, dir))
+
+                #Make DT withvalue break specs
+                vbrk_dt <- data.table(group=unique(dat_ctrl[, group]), ylim1, xbrkint)
 
                 #Determine relative sizes of variable facets (in cm) from maxv
 
-                #Set plot width (cms) of variable with highest maxv
-                maxw  <- 5
+                  #Set plot width (cm's) of variable with highest maxv
+                  #Set constant plot width for groups whose plots are not to be scaled
+                  maxw  <- 5
+                  constw <- 5/2
 
-                #ylim[2]  of each variable will be maxv rounded up to the nearest 5
-                dat_ctrl[, ylim1:=0]
-                dat_ctrl[, ylim2:=roundUp(x=maxv,to=5)]
+                  #ylim[2] of each variable will be maxv rounded up to the nearest 5
+                  dat_ctrl[, ylim1:=0]
+                  dat_ctrl[, ylim2:=roundUp(x=maxv,to=5)]
 
-                #Width of each variable's facet is maxw factored by that variable's maxv/global ylim[2]
-                dat_ctrl[, pwidth:=(ylim2/max(dat_ctrl[, ylim2]))*maxw]
+                  #Width of each variable's facet is maxw factored by that variable's maxv/global ylim[2]
+                  dat_ctrl[, pwidth:=(ylim2/max(dat_ctrl[, ylim2]))*maxw]
+
+                  #Set plot width of unscaled graphs to half the maximum plot size
+                  dat_ctrl[group%in%const_grps, pwidth:=constw]
+
+                  #All plots/variables whose plots have constant width should have the same ylim2
+                  #this will be the group-wise maximum to accomodate all vars
+                  dat_ctrl[group%in%const_grps, ylim2:=max(ylim2), .(group)]
 
                 #Split input data into variable-wise list
                 dat_var <- lapply(X=split(1:nrow(dat), f=as.character(dat[, variable])), FUN=function(x)dat[x])
@@ -95,8 +132,7 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
               st_ht <- unit(sum(as.numeric(gglist$grobs[[2]]$grobs[[1]]$heights), strip_height), 'cm')
 
               #Make y axis grob
-              #source('fun/uniYaxis.R', local=T)
-              gg_yax <- uniYaxis(tym_brks, st_ht)
+              gg_yax <- uniYaxis(tym_brks, st_ht, glab_ht)
 
              #Get total width of y axis grob, less default annotation allowance (0.2), plus that of accompanying title
               axw <- sum(grobWidth(gg_yax$grobs[[1]][['grobs']][gg_yax$grobs[[1]]$layout$name=='ylab'][[1]]),
@@ -107,21 +143,17 @@ stratPlot <- function(dat=dat, grp_ord=c('Trees', 'Shrub', 'Herb'),
              gg_grob <- arrangeGrob(gglist, left=gg_yax, padding=axw)
 
             #Add plot labels (if supplied)
-
              #Plot label
              if(nchar(plab) > 1){
                plab_grob <- textGrob(label=plab, gp=gpar(fontsize=ptt_tsize, fontface='bold', col="grey30"))
                gg_grob <- arrangeGrob(gg_grob, top=plab_grob, padding=unit(0.5, units='cm'))
              }
 
-             #X axis label
-             if(nchar(xlab) > 1){
-               xlab_grob <- textGrob(label=xlab, gp=gpar(fontsize=axs_tsize, col="grey30"))
-               gg_grob   <- arrangeGrob(gg_grob, bottom=xlab_grob, padding=unit(0.5, units='cm'))
-             }
-
              #Add spacer row at the top for some nice margin
              gg_grob <- gtable_add_rows(x=gg_grob, height=unit(0.2, 'cm'), pos=0)
+
+             #Add spacer row at the bottom for some nice margin
+             gg_grob <- gtable_add_rows(x=gg_grob, height=unit(0.2, 'cm'), pos=3)
 
              return(gg_grob)
 }

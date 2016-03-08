@@ -24,10 +24,7 @@ stratPlot(dat = dat,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dat}{
-  Dataset to use for plotting. This should be a data.table object.
-}
-  \item{grp_ord}{
-Order of groups associted with input variables: first to last.
+Dataset to use for plotting. This should be a data.table object.
 }
   \item{tymcol}{
 Name of column that contains the temporal dimension.
@@ -38,14 +35,47 @@ Name of column that contains the variable labels
   \item{valcol}{
 Name of column that contains values of each variable
 }
+  \item{varord}{
+How should variables be ordered?, "alph" for alphabetically, "range" for ordering
+based on relative ranges of the variables.
+}
+
+  \item{grp_ord}{
+Order of groups associted with input variables: first to last.
+}
   \item{grpcol}{
 Name of column that contains group labels for each variable
 }
+  \item{grpgeom}{
+Geometry to which data in each group should be mapped to. This should be of (a)
+length 1 in which case all plots have the same geometry or, (b) length equal to
+the number of groups in which case supplied lengths are applied along "grp_ord"
+}
+  \item{grp_vartype}{
+Vector indicating the type of variable in each group. This should be of (a)
+length 1 in which case all plots have the same x-axis label, or (b) length equal to
+the number of groups in which case supplied labels are applied along "grp_ord"
+}
+  \item{const_grps}{
+Names of groups whose plot widths should not be relatively scaled.
+}
   \item{gcols}{
-Vector of colours to symbolize each group
+Vector of colours to symbolize each group.
+}
+  \item{xlim1}{
+Left extent of plots in each group. This should be of (a) length 1 in
+which case all plots have the same left extent or, (b) length equal to the number
+of groups in which case supplied lengths are applied along "grp_ord"
+}
+  \item{xbline}{
+X-position of the plot baselines. This should be of (a) length 1 in
+which case all plots have the same baseline or, (b) length equal to the number of groups in which case supplied values are applied along "grp_ord"
 }
   \item{xbrkint}{
-Intervals at which value breaks (i.e., x-axis breaks) are spaced
+Intervals at which value breaks (i.e., x-axis breaks) are spaced.This should be
+of (a) length 1 in which case all plots have the same interval spacing or, (b)
+length equal to the number of groups in which case the supplied intervals are
+applied along "grp_ord".
 }
   \item{ybrkint}{
 Intervals at which temporal breaks (i.e., y-axis breaks) are spaced
@@ -112,4 +142,3 @@ John Shekeine, \href{'http://arve.unil.ch/'}{ARVE Research Group}, University of
 \keyword{ ~pollen }
 \keyword{ ~stratigraphy }
 \keyword{ ~ggplot2 }
-

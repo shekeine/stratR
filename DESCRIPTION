@@ -21,6 +21,7 @@ Depends:
     gridExtra,
     gtable (>= 0.1.1),
     reshape2,
+    plyr,
     RColorBrewer
 Imports:
 License: GPL-2

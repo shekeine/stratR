@@ -1,13 +1,28 @@
 #Build universal y axis facet
 #Returns grob object with universal age axis
 
-uniYaxis <- function(tym_brks, st_ht){
+uniYaxis <- function(tym_brks, st_ht, glab_ht){
 
                                 #Observation time points
                                 tlevs <- dat_var[[1]][, agebp]
 
                                 #Make dummy data
                                 dat_i <- data.frame(x=tlevs, vals=1:length(tlevs), var_ids='uni_y')
+
+                                #Update bottom margin by adding size of bottom strip to bottom margin
+
+                                  #New bottom margin
+                                    #Get height of bottom strip with the variable type labels and update margin
+                                    bs_ht <- gglist$heights[2]
+                                    bmar <- convertX(x=sum(pmargin[3], bs_ht), unitTo='cm')
+
+                                  #New top margin, for some reason, Difference betw heights of top strip with group labels
+                                  #and bottom strip with vartype labels needs to be discounted:: To investigate cleaner solution
+                                  diff_ht <- glab_ht-bs_ht
+                                  tmar <- convertX(x=sum(pmargin[1], diff_ht), unitTo='cm')
+
+                                  #New top margin
+                                  pmargin2 <- unit.c(tmar, pmargin[2], bmar, pmargin[4])
 
                                 #Build plot
                                 gg_axis <- ggplot(data=dat_i, aes(y=vals, x=x)) + facet_wrap(~var_ids) +
@@ -25,9 +40,8 @@ uniYaxis <- function(tym_brks, st_ht){
 
                                             #Universal axis line
                                             geom_segment(aes(x=min(tym_brks), xend=max(tym_brks), y=0, yend=0), size=0.7) +
-
                                             theme(
-                                              plot.margin=pmargin,
+                                              plot.margin=pmargin2,
                                               #panel.border=element_rect(fill='white', colour='black'),
                                               panel.border=element_blank(),
                                               panel.grid=element_blank(),
