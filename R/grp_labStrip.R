@@ -1,14 +1,20 @@
 #This function takes group labels and their colours and returns a heading strip with the appropriate aesthetics
-grp_labStrip <- function(dt_col, labcol, tsize, usecol=T){
+grp_labStrip <- function(dt_col, tsize, grplab=T){
 
-                  #Labels
-                  xlabs <- unname(unlist(dt_col[, get('labcol'), with=F]))
+                  #Groups
+                  grps <- dt_col[, group]
 
                   #Make top strips for each plot
-                  tlist <- lapply(X=xlabs, FUN=function(lab){
+                  tlist <- lapply(X=grps, FUN=function(grp){
+
+                            #Isolate i'th group parameters
+                            irow <- dt_col[group==grp]
 
                             #Get strip color
-                            tcol <- dt_col[dt_col[, get('labcol'), with=F][[1]]==lab, col]
+                            tcol <- irow[, col]
+
+                            #Get label
+                            if(grplab){lab <- irow[, group]}else{lab <- irow[, vartype]}
 
                             #Make labeller plot
                             dat <- data.frame(x=1, y=1, lab=lab)
@@ -24,8 +30,8 @@ grp_labStrip <- function(dt_col, labcol, tsize, usecol=T){
                                         axis.ticks.y=element_blank(),
                                         axis.title.y=element_blank(),
                                         strip.text=element_text(size=tsize,
-                                                                colour=ifelse(usecol, 'black', tcol)),
-                                        strip.background=eval(parse(text=ifelse(usecol,
+                                                                colour=ifelse(grplab, 'grey99', tcol)),
+                                        strip.background=eval(parse(text=ifelse(grplab,
                                                                                 "element_rect(fill=tcol, colour=tcol)",
                                                                                 "element_rect(fill='transparent', colour='transparent')")))
                                       )

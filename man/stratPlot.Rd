@@ -10,16 +10,33 @@ that are relatively sized and have consistent axis parameters,
 making it easy to compare multiple time-series with different means.
 }
 \usage{
-stratPlot(dat = dat,
-          grp_ord = c("Trees", "Shrub", "Herb"),
-          tymcol = "agebp", varcol = "variable",
-          valcol = "value", grpcol = "group",
-          gcols = brewer.pal(n = length(unique(dat[, group])),
-                             name = "Dark2"),
-          xbrkint = 5, ybrkint = 500, axs_tsize = 20,
-          var_tsize = 22, grp_tsize = 25, ptt_tsize = 25,
-          plab = "", xlab = "", ylab = "Time variable",
-          pmargin = unit(c(0.05, 0, 0.1, 0), "cm"))
+stratPlot(dat=dat,
+          tymcol='agebp',
+          varcol='variable',
+          valcol='value',
+          varord=c('alph', 'med')[1],
+
+          grp_ord=unique(dat[, group]),
+          grpcol='group',
+          grpgeom=c('area', 'line')[1],
+          grp_vartype='',
+          const_grps=NULL,
+          gcols=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
+
+          xlim1=NULL,
+          xbline=NULL,
+          xbrkint=5,
+          ybrkint=500,
+
+          axs_tsize=20,
+          var_tsize=22,
+          grp_tsize=25,
+          ptt_tsize=25,
+
+          plab='',
+          ylab='Time variable',
+          pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')
+                      )
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

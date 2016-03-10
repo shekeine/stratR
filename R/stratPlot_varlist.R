@@ -32,7 +32,7 @@ stratPlot_varlist <- function(dat_grpL){
                               grob_grp$layout$z <- rev(grob_grp$layout$z)
 
                               #Make group labeller strip
-                              tstrip <- grp_labStrip(dt_col, labcol='group', tsize=grp_tsize)
+                              tstrip <- grp_labStrip(dt_col, tsize=grp_tsize, grplab=T)
 
                               #Append group labels as a top strip
                                 #Get height of strip
@@ -41,7 +41,7 @@ stratPlot_varlist <- function(dat_grpL){
 
                                 ##Make variable type labeller strip
                                 if(length(grp_vartype) >= 1){
-                                 bstrip <- grp_labStrip(dt_col, labcol='vartype', tsize=axs_tsize, usecol=F)
+                                 bstrip <- grp_labStrip(dt_col, tsize=axs_tsize, grplab=F)
                                  vtyp_ht <- unit((as.numeric(bstrip$grobs[[1]]$heights)), 'cm')
                                  grob_grp <- arrangeGrob(grob_grp, bstrip, ncol=1,
                                                          heights=unit.c(unit(1, 'null'), vtyp_ht), padding = unit(0, "cm"))

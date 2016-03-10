@@ -54,10 +54,10 @@ stratPlot_var <- function(dat_i){
                                         eval(parse(text=ifelse(isArea,
                                                                "geom_area(fill=gcol, colour=gcol, size=0.3)",
                                                                "geom_line(colour=gcol, size=0.3, aes(group=1))"))) +
-                                        geom_segment(data=seg_dt, aes(x=x1, xend=x2, y=y1, yend=y2), size=0.1, colour='grey10') +
+                                        geom_segment(data=seg_dt, aes(x=x1, xend=x2, y=y1, yend=y2), size=0.1, colour='grey80') +
 
                                         #X axis line
-                                        geom_segment(aes(x=max(tym_brks), xend=max(tym_brks), y=ylims1, yend=ylims2), size=0.4, colour='grey10')+
+                                        geom_segment(aes(x=max(tym_brks), xend=max(tym_brks), y=ylims1, yend=ylims2), size=0.4, colour=gcol)+
 
                                        #Diagnostic red lines:Should line up with y axis breaks to the left if all subplots have
                                        #been scaled properly
@@ -74,7 +74,7 @@ stratPlot_var <- function(dat_i){
                                                                       xend=max(tym_brks), y=ylims2, yend=ylims2), size=0.5, col=gcol)",
                                                                "geom_blank()"))) +
 
-                                        geom_point(colour="black", size=0.3) +
+                                        geom_point(colour="black", size=0.2) +
 
                                         #Baseline
                                         geom_abline(intercept=xbline, slope=0, size=0.2, colour="red", linetype=2) +
@@ -104,6 +104,5 @@ stratPlot_var <- function(dat_i){
                                           axis.text.x=element_text(size=axs_tsize, colour=gcol),
                                           axis.text.y=element_blank()
                                         )
-                                aa<<- gg_i
                               return(gg_i)
 }
