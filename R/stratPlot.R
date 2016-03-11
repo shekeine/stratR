@@ -1,16 +1,16 @@
 #Call helper functions
 stratPlot <- function(dat=dat,
+                      grpcol='group',
                       tymcol='agebp',
                       varcol='variable',
                       valcol='value',
                       varord=c('alph', 'med')[1],
 
-                      grp_ord=unique(dat[, group]),
-                      grpcol='group',
-                      grpgeom=c('area', 'line')[1],
+                      grp_ord=unique(dat[, get(grpcol)]),
+                      grp_geom=c('area', 'line')[1],
                       grp_vartype='',
                       const_grps=NULL,
-                      gcols=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
+                      grp_colours=brewer.pal(n=length(grp_ord), name='Dark2'),
 
                       xlim1=NULL,
                       xbline=NULL,
@@ -22,9 +22,12 @@ stratPlot <- function(dat=dat,
                       grp_tsize=25,
                       ptt_tsize=25,
 
+                      exag_by=5,
+
                       plab='',
                       ylab='Time variable',
-                      pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')){
+                      pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')
+                      ){
 
             #Set helper functions environments to dynamically scope
             environment(stratPlot_varlist) <- environment()
@@ -41,8 +44,6 @@ stratPlot <- function(dat=dat,
               dat[, ntNA:=sum(!is.na(value)), by=variable]
               dat <- dat[ntNA>0]
               dat[, ntNA:=NULL]
-
-              #Sort input data by seting DT key
               setkey(dat)
 
             #Make plotting parameters
@@ -51,41 +52,44 @@ stratPlot <- function(dat=dat,
                 #Y axis expansion factor
                 expF <- c(0, 0)
 
-                #Time breaks (Age/time/depth) and labels
-                tym_brks <- round(seq(from=0-ybrkint, to=roundUp(max(dat[, agebp], na.rm=T), ybrkint)+ybrkint, by=ybrkint), -1)
+                #Time axis breaks and labels
+                tym_brks <- round(seq(from=0-ybrkint,
+                                      to=round_any(x=max(dat[, agebp], na.rm=T),
+                                                   ybrkint, ceiling),
+                                      by=ybrkint), -1)
                 tym_labs <- tym_brks + rep(c(NA, 0), length.out=length(tym_brks))
                 tym_labs[is.na(tym_labs)] <- ''
 
-                #xlim1: left extent of plots in each group. This is actually ylim1 with coord_flip()
+
+
+                #xlim1: left extent of plots in each group. This is actually ylim1 since we'll coord_flip()
                 if(!length(xlim1)){
                   dt1 <- dat[, min(value, na.rm=T), .(group)][group%in%grp_ord, ]
                   dt1[, xbrkint:=xbrkint] ; setnames(dt1, 'V1', 'gmin')
                   ylim1 <- dt1[, round_any(gmin, xbrkint, floor)]
                 }else{ylim1 <- xlim1}
 
-                #Collect group-level parameters
-                dt_col <- data.table(group=grp_ord, col=gcols,
-                                     vartype=grp_vartype, geom=grpgeom, ylim1=ylim1)
-
-                #Get height needed for all facet titles
+                #Calculate height needed for all facet titles
                 dt_strip <- data.table(vnames=unique(dat[, variable]))
                 gt_strip <- arrangeGrob(ggplot(data=dt_strip) + facet_wrap(~vnames, ncol=nrow(dt_strip)) + geom_blank() +
                                           theme(strip.text=element_text(size=20, angle=45)))
                 strip_height   <- as.numeric(gt_strip[['grobs']][[1]][['heights']][3])
 
               #Variable-wise parameters
-                #Make Ctrl table with each variable's maximum rate of occurence: used 2set plot extent and labels
+                #Make Ctrl table with each variable's maximum rate of occurence
+                #determines value labels and plot extent along the value axis
                 dat_ctrl <- dat[, max(value, na.rm=T), by=c('group', 'variable')]
                 setnames(dat_ctrl, 'V1', 'maxv')
 
-                #Add median
+                #Calculate median
+                #Determines relative plot sizes and ordering by magnitude
                 dt1 <- dat[, median(value, na.rm=T), by=c('group', 'variable')]
                 setnames(dt1, 'V1', 'med')
                 dat_ctrl <- merge(dat_ctrl, dt1, by=c('group', 'variable'))
 
                 #xbline: baseline position along x. This is actually a y coordinate with coord_flip()
                 #If undefined, compute it from each variable's median
-                #If defined (should be done at group level), merge to match with respective variables
+                #If defined merge with dat_ctrl to match with respective variables
                 if(!length(xbline)){
                   dt1 <- dat[, median(value, na.rm=T), .(variable)]
                   setnames(dt1, 'V1', 'xbline')
@@ -94,50 +98,71 @@ stratPlot <- function(dat=dat,
                   dat_ctrl <- merge(dat_ctrl, data.table(group=grp_ord, xbline), by='group')
                 }
 
+                #Add group parameters
+                dat_ctrl <- merge(dat_ctrl,
+                                  data.table(group=grp_ord, col=grp_colours,
+                                             vartype=grp_vartype, grp_geom, ylim1, xbrkint),
+                                  by='group')
+
                 #Define group levels: determines ordering of groups
                 dat_ctrl[, group:=factor(dat_ctrl$group, levels=grp_ord, ordered=T)]
 
-                #Order variables by group, then by med or alphabetically depending on varord
+                #Order variables by group, then by median or alphabetically depending on varord arg
                 ordby <- ifelse(varord[1]=='alph', 'variable', 'med')
                 dir   <- ifelse(ordby=='variable', 1, -1)
                 setorderv(x=dat_ctrl, cols=c('group', ordby), order=c(1, dir))
 
-                #Make DT withvalue break specs
-                vbrk_dt <- data.table(group=unique(dat_ctrl[, group]), ylim1, xbrkint)
+                #Calculate relative sizes of variable plots (cm's) based on relative importance (medians)
 
-                #Determine relative sizes of variable facets (in cm) based on relative abundances (median)
-
-                  #Set plot width (cm's) of variable with highest maxv
-                  #Set constant plot width for groups whose plots are not to be scaled
+                  #Widest plot will have width of 5cm
                   maxw  <- 5
-                  constw <- 5/3
 
-                  #ylim[2] of each variable will be maxv rounded up to the nearest 5
-                  dat_ctrl[, ylim2:=roundUp(x=maxv,to=5)]
+                  #Plots of variables in const_grps will have width of (5/2)cm
+                  constw <- 5/2
+
+                  #Right extent of each a variable's plot (ylim[2]) will be its maxv-
+                  #rounded up to the nearest xbrkint of its group
+                  dat_ctrl[, ylim2:=round_any(x=maxv, 5, f=ceiling)]
 
                   #Width of each variable's facet is maxw factored by that variable's med/global med
                   dat_ctrl[, pwidth:=(med/max(dat_ctrl[, med]))*maxw]
 
-                  #set pwidths that are too low to some constant
-                  dat_ctrl[pwidth < 0.5, pwidth:=0.5]
-
                   #Set plot width of unscaled graphs to half the maximum plot size
                   dat_ctrl[group%in%const_grps, pwidth:=constw]
 
-                  #All plots/variables whose plots have constant width should have the same ylim2
-                  #this will be the group-wise maximum to accomodate all vars
+                  #Unscaled plots should all have the same ylim2==group-wise max
                   dat_ctrl[group%in%const_grps, ylim2:=max(ylim2), .(group)]
 
-                #Split input data into variable-wise list
-                dat_var <- lapply(X=split(1:nrow(dat), f=as.character(dat[, variable])), FUN=function(x)dat[x])
+                  #Recalculate widths of plots that are too narrow to display variable label or plot extent
 
-                #Graph each variable (group-wise)
-                gglist <- stratPlot_varlist(dat_var)
-                glab_ht <- gglist$glab_ht
-                gglist  <- stratPlot_varlist(dat_var)$grob_grp
+                    #For each group, get smallest pwidth that is above 0.5cm thresh-hold
+                    dt1 <- dat_ctrl[pwidth>=0.5, min(pwidth), .(group)]
+                    setnames(dt1, 'V1', 'pwidth2')
+                    dat_ctrl <- merge(dat_ctrl, dt1, by='group', all.x=T)
+
+                    #Get corresponding ylim2
+                    dt1 <- unique(dat_ctrl[pwidth==pwidth2])[, list(group, ylim2)]
+                    setnames(dt1, 'ylim2', 'ylim2_2')
+                    dat_ctrl <- merge(dat_ctrl, dt1, by='group', all.x=T)
+
+                    #Update pwidths and ylim2 of plots with pwidth<thresh-hold of 0.5
+                    #Note exclusion of const_grps
+                    dat_ctrl[pwidth<0.5 & !variable%in%const_grps,
+                             c('ylim2', 'pwidth'):=list(ylim2_2, pwidth2)]
+                    dat_ctrl[, c('ylim2_2', 'pwidth2'):=NULL]
+
+            #Split input data.table into variable-wise list
+            vlist <- lapply(X=split(1:nrow(dat),
+                                    f=as.character(dat[, variable])),
+                            FUN=function(x)dat[x])
+
+            #Graph data (variable-wise)
+            gglist <- stratPlot_varlist(var_list=vlist)
+            glab_ht <- gglist$glab_ht
+            gglist  <- gglist$grob_grp
 
             #Add universal y axis
-             #Determine strip text height of y axis plot==sum of heights of group & strip.heights
+             #Determine strip text height of y axis plot, ==sum of heights of group & strip.heights
               st_ht <- unit(sum(as.numeric(gglist$grobs[[2]]$grobs[[1]]$heights), strip_height), 'cm')
 
               #Make y axis grob

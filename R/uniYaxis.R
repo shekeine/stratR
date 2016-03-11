@@ -4,7 +4,7 @@
 uniYaxis <- function(tym_brks, st_ht, glab_ht){
 
                                 #Observation time points
-                                tlevs <- dat_var[[1]][, agebp]
+                                tlevs <- unique(dat[, agebp])
 
                                 #Make dummy data
                                 dat_i <- data.frame(x=tlevs, vals=1:length(tlevs), var_ids='uni_y')

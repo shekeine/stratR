@@ -11,17 +11,17 @@ making it easy to compare multiple time-series with different means.
 }
 \usage{
 stratPlot(dat=dat,
+          grpcol='group',
           tymcol='agebp',
           varcol='variable',
           valcol='value',
           varord=c('alph', 'med')[1],
 
           grp_ord=unique(dat[, group]),
-          grpcol='group',
-          grpgeom=c('area', 'line')[1],
+          grp_geom=c('area', 'line')[1],
           grp_vartype='',
           const_grps=NULL,
-          gcols=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
+          grp_colours=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
 
           xlim1=NULL,
           xbline=NULL,
@@ -36,12 +36,15 @@ stratPlot(dat=dat,
           plab='',
           ylab='Time variable',
           pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')
-                      )
+         )
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dat}{
 Dataset to use for plotting. This should be a data.table object.
+}
+  \item{grpcol}{
+Name of column that contains group labels for each variable
 }
   \item{tymcol}{
 Name of column that contains the temporal dimension.
@@ -56,14 +59,10 @@ Name of column that contains values of each variable
 How should variables be ordered?, "alph" for alphabetically, "med" for ordering
 based on relative abundances (based on medians) of the variables.
 }
-
   \item{grp_ord}{
 Order of groups associted with input variables: first to last.
 }
-  \item{grpcol}{
-Name of column that contains group labels for each variable
-}
-  \item{grpgeom}{
+  \item{grp_geom}{
 Geometry to which data in each group should be mapped to. This should be of (a)
 length 1 in which case all plots have the same geometry or, (b) length equal to
 the number of groups in which case supplied lengths are applied along "grp_ord"
@@ -76,7 +75,7 @@ the number of groups in which case supplied labels are applied along "grp_ord"
   \item{const_grps}{
 Names of groups whose plot widths should not be relatively scaled.
 }
-  \item{gcols}{
+  \item{grp_colours}{
 Vector of colours to symbolize each group.
 }
   \item{xlim1}{
@@ -109,6 +108,9 @@ Text size of group labels: subplot titles are in turn read from "grpcol"
   \item{ptt_tsize}{
 Text size of plot title
 }
+  \item{exag_by}{
+Factor by which to exaggerrate area plots. Defaults to 5.
+ }
   \item{plab}{
 Plot title
 }
@@ -119,7 +121,8 @@ X-axis title
 Y-axis title i.e., title to associate with tymcol
 }
   \item{pmargin}{
-Margins to put around each subplot.
+Margins to put around plots with the sizes of the top, right, bottom, and left
+margins. This should be specified as a "unit" object.
 
 }
 }

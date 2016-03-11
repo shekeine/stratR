@@ -1,14 +1,15 @@
-#This function takes group labels and their colours and returns a heading strip with the appropriate aesthetics
-grp_labStrip <- function(dt_col, tsize, grplab=T){
+#This function ingests group labels, colours, and variable type in a data.table
+#Returns a heading strip with the appropriate aesthetics
+grp_labStrip <- function(dt, tsize, grplab=T){
 
                   #Groups
-                  grps <- dt_col[, group]
+                  grps <- dt[, group]
 
                   #Make top strips for each plot
                   tlist <- lapply(X=grps, FUN=function(grp){
 
                             #Isolate i'th group parameters
-                            irow <- dt_col[group==grp]
+                            irow <- dt[group==grp]
 
                             #Get strip color
                             tcol <- irow[, col]
