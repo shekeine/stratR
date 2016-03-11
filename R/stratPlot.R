@@ -29,7 +29,7 @@ stratPlot <- function(dat=dat,
                       pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')
                       ){
 
-            #Set helper functions environments to dynamically scope
+            #Set helper functions' environments to dynamically scope
             environment(stratPlot_varlist) <- environment()
             environment(stratPlot_var) <- environment()
             environment(grp_labStrip) <- environment()
@@ -124,8 +124,9 @@ stratPlot <- function(dat=dat,
                   #rounded up to the nearest xbrkint
                   dat_ctrl[, ylim2:=round_any(x=maxv, xbrkint, f=ceiling)]
 
-                  #Width of each variable's facet is maxw factored by that variable's med/global med
-                  dat_ctrl[, pwidth:=(med/max(dat_ctrl[, med]))*maxw]
+                  #Width of each variable's plot is maxw factored by its group's maximum median
+                  #aa<<- copy(dat_ctrl)
+                  dat_ctrl[, pwidth:=(abs(med)/max(abs(med)))*maxw, .(group)]
 
                   #Set plot width of unscaled graphs to half the maximum plot size
                   dat_ctrl[group%in%const_grps, pwidth:=constw]

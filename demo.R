@@ -27,7 +27,7 @@ test <- stratPlot(dat=dat_melt,
                    grp_geom=c('line', 'line', 'line','area'),
                    grp_vartype=c('MinD', 'SD', 'SD','Percentages'),
 
-                   const_grps=c('Model', 'Precipitation', 'Temperature'),
+                   #const_grps=c('Model', 'Precipitation', 'Temperature'),
                    grp_colours=c('grey40', 'blue', 'brown3','darkgreen'),
 
                    xlim1=NULL,
