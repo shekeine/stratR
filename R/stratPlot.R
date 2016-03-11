@@ -121,8 +121,8 @@ stratPlot <- function(dat=dat,
                   constw <- 5/2
 
                   #Right extent of each a variable's plot (ylim[2]) will be its maxv-
-                  #rounded up to the nearest xbrkint of its group
-                  dat_ctrl[, ylim2:=round_any(x=maxv, 5, f=ceiling)]
+                  #rounded up to the nearest xbrkint
+                  dat_ctrl[, ylim2:=round_any(x=maxv, xbrkint, f=ceiling)]
 
                   #Width of each variable's facet is maxw factored by that variable's med/global med
                   dat_ctrl[, pwidth:=(med/max(dat_ctrl[, med]))*maxw]
