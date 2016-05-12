@@ -21,7 +21,8 @@ stratPlot_varlist <- function(var_list){
 
                               #Make every title space(strip.text) have the height of the tallest title space (i.e. longest var label)
                               for(nm in names(gglist)){
-                                  grob_grp[["grobs"]][[nm]]$heights[grob_grp[["grobs"]][[nm]]$layout$name=="strip_t-1"] <- unit(strip_height, 'cm')
+                                  grob_grp[["grobs"]][[nm]]$heights[grob_grp[["grobs"]][[
+                                    nm]]$layout$name=="strip_t-1"] <- unit(strip_height, 'cm')
                                   grob_grp[["grobs"]][[nm]]$grobs[["strip_t"]]$heights <- unit(1, 'native')
                               }
 
@@ -31,15 +32,13 @@ stratPlot_varlist <- function(var_list){
                               #Reverse z index to allow left-right overlap
                               grob_grp$layout$z <- rev(grob_grp$layout$z)
 
-                              #Make group labeller strip
-                              tstrip <- grp_labStrip(dt=unique(dat_ctrl[,
-                                                                        list(group, vartype, col)]),
-                                                     tsize=grp_tsize, grplab=T)
-
                               #Append group labels as a top strip
                                 #Get height of strip
-                                glab_ht <- unit((as.numeric(tstrip$grobs[[1]]$heights)), 'cm')
-                                grob_grp <- arrangeGrob(grob_grp, top=tstrip, clip=F, padding=glab_ht)
+#                                 grob_grp <- arrangeGrob(tstrip, grob_grp, ncol=1,
+#                                                         heights=unit.c(tstrip_h, unit(1, 'null')),
+#                                                         padding=unit(0, "cm"))
+                              grob_grp<-grob_grp
+                                grob_grp <- arrangeGrob(grob_grp, top=tstrip, clip=T, padding=tstrip_h)
 
                                 ##Make variable type labeller strip (to be appended at the bottom)
                                 if(length(grp_vartype) >= 1){
@@ -51,10 +50,8 @@ stratPlot_varlist <- function(var_list){
                                                          heights=unit.c(unit(1, 'null'), vtyp_ht), padding = unit(0, "cm"))
                                 }
 
-                              #Add right margin to ensure that last label fits in the plot-
-                              #-margin width assumes that each char of the final plot's label takes up 0.2cm
-                              mw <- nchar(as.character(dat_ctrl[nrow(dat_ctrl), variable])) * 0.25
+                              #Add right margin extension to ensure that last label fits in the plot
                               grob_grp <- gtable_add_cols(grob_grp, unit(mw,"cm"))
 
-                            return(list(grob_grp=grob_grp, glab_ht=glab_ht))
+                            return(list(grob_grp=grob_grp, tstrip_h=tstrip_h, mw=mw))
                           }

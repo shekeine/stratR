@@ -40,7 +40,6 @@ grp_labStrip <- function(dt, tsize, grplab=T){
                             return(lab_grob)
                   })
 
-
                   #Relative group widths
                   grpW <- dat_ctrl[, sum(pwidth), by='group'][, V1]
 

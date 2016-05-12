@@ -10,33 +10,39 @@ that are relatively sized and have consistent axis parameters,
 making it easy to compare multiple time-series with different means.
 }
 \usage{
-stratPlot(dat=dat,
-          grpcol='group',
-          tymcol='agebp',
-          varcol='variable',
-          valcol='value',
-          varord=c('alph', 'med')[1],
+        stratPlot(
+        dat=dat,
+        grpcol='group',
+        tymcol='agebp',
+        varcol='variable',
+        valcol='value',
+        varord=c('alph', 'med')[1],
 
-          grp_ord=unique(dat[, group]),
-          grp_geom=c('area', 'line')[1],
-          grp_vartype='',
-          const_grps=NULL,
-          grp_colours=brewer.pal(n=length(unique(dat[, group])), name='Dark2'),
+        grp_ord=unique(dat[, get(grpcol)]),
+        grp_geom=c('area', 'line')[1],
+        grp_vartype='',
+        const_grps=NULL,
+        grp_colours=brewer.pal(n=length(grp_ord), name='Dark2'),
 
-          xlim1=NULL,
-          xbline=NULL,
-          xbrkint=5,
-          ybrkint=500,
+        eqAxes=T,
+        xlim1=NULL,
+        xbline=NULL,
+        xbrkint=5,
+        ybrkint=500,
 
-          axs_tsize=20,
-          var_tsize=22,
-          grp_tsize=25,
-          ptt_tsize=25,
+        axs_tsize=20,
+        var_tsize=22,
+        grp_tsize=25,
+        ptt_tsize=25,
 
-          plab='',
-          ylab='Time variable',
-          pmargin=unit(c(0.05, 0, 0.1, 0), 'cm')
-         )
+        exag_by=5,
+
+        plab='',
+        ylab='Time variable',
+        pmargin=unit(c(0.05, 0, 0.1, 0), 'cm'),
+        maxw=5
+        )
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -78,6 +84,11 @@ Names of groups whose plot widths should not be relatively scaled.
   \item{grp_colours}{
 Vector of colours to symbolize each group.
 }
+  \item{eqAxes}{
+Should value scales of variables in the same group have X axes that are comparable
+in absolute terms? i.e., such that a dispacement of say, 10 units along the x axis of
+any two variables in the same group covers the same absolute distance?
+}
   \item{xlim1}{
 Left extent of plots in each group. This should be of (a) length 1 in
 which case all plots have the same left extent or, (b) length equal to the number
@@ -85,7 +96,8 @@ of groups in which case supplied lengths are applied along "grp_ord"
 }
   \item{xbline}{
 X-position of the plot baselines. This should be of (a) length 1 in
-which case all plots have the same baseline or, (b) length equal to the number of groups in which case supplied values are applied along "grp_ord"
+which case all plots have the same baseline or, (b) length equal to the number
+of groups in which case supplied values are applied along "grp_ord"
 }
   \item{xbrkint}{
 Intervals at which value breaks (i.e., x-axis breaks) are spaced.This should be
@@ -109,7 +121,7 @@ Text size of group labels: subplot titles are in turn read from "grpcol"
 Text size of plot title
 }
   \item{exag_by}{
-Factor by which to exaggerrate area plots. Defaults to 5.
+Factor by which to exaggerrate area plot geometries to amplify very small values.
  }
   \item{plab}{
 Plot title
@@ -123,6 +135,9 @@ Y-axis title i.e., title to associate with tymcol
   \item{pmargin}{
 Margins to put around plots with the sizes of the top, right, bottom, and left
 margins. This should be specified as a "unit" object.
+}
+  \item{maxw}{
+Plot width (in cm) of the variable that has the highest range in each group.
 
 }
 }
@@ -140,7 +155,8 @@ can be produced with \code{\link[grid]{grid.draw}} or \code{\link[grid]{grid.arr
 %% ~put references to the literature/web site here ~
 }
 \author{
-John Shekeine, \href{'http://arve.unil.ch/'}{ARVE Research Group}, University of Lausanne
+John Shekeine, Basil Davis: \href{'http://arve.unil.ch/'}{ARVE Research Group},
+University of Lausanne
 }
 \note{
 %%  ~~further notes~~

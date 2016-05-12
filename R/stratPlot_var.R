@@ -18,10 +18,12 @@ stratPlot_var <- function(dat_i){
                                   ylims2 <- as.numeric(dat_ctrl[variable==as.character(dat_i[, variable][1])][, list(ylim2)])
 
                                   #Get baseline position
-                                  xbline <- dat_ctrl[group==dat_i[, group][1] & variable==as.character(dat_i[, variable][1]), xbline]
+                                  xbline <- dat_ctrl[group==dat_i[, group][1] &
+                                                       variable==as.character(dat_i[, variable][1]), xbline]
 
                                   #Subset table to make line segments at age samples
-                                  seg_dt <- data.table(x1=unique(dat[, agebp]), x2=unique(dat[, agebp]), y1=ylims1, y2=ylims2)
+                                  seg_dt <- data.table(x1=unique(dat[, agebp]),
+                                                       x2=unique(dat[, agebp]), y1=ylims1, y2=ylims2)
 
                                   #Value axis breaks
 
@@ -45,7 +47,10 @@ stratPlot_var <- function(dat_i){
                                   #If there are more than 2 vbrks, remove last vlab
                                   if(length(vbrks)>2){vlabs[length(vlabs)] <- ''}
 
-                                  #If there are 3 breaks, make sure second is labelled
+                                  #If there are only 2 breaks, label both: DELETE
+                                  #if(length(vbrks)==2){vlabs <- vbrks}
+
+                                  #If there are 3 breaks,force labelling of 2nd
                                   if(length(vbrks)==3){vlabs[2] <- vbrks[2]}
 
                                 gg_i <- ggplot(data=dat_i, aes(x=agebp, y=value)) + facet_wrap(~variable) +
@@ -53,7 +58,6 @@ stratPlot_var <- function(dat_i){
 
                                         scale_x_reverse(breaks=tym_brks, labels=tym_labs, expand=c(0, 0)) +
                                         scale_y_continuous(breaks=vbrks, labels=vlabs, expand=c(0, 0)) +
-
 
                                         #Main plot geometry
                                         eval(parse(text=ifelse(isArea,
@@ -65,7 +69,6 @@ stratPlot_var <- function(dat_i){
                                                                "geom_area(data=dat_i, aes(x=agebp, y=value*exag_by),
                                                                           fill=gcol, colour='grey90', alpha=0.25, size=0.3)",
                                                                "geom_blank()"))) +
-
 
                                         #Line segments at sample positions
                                         geom_segment(data=seg_dt, aes(x=x1, xend=x2,
@@ -108,7 +111,7 @@ stratPlot_var <- function(dat_i){
                                           strip.text=element_text(colour=gcol, size=var_tsize, angle=45, vjust=0, hjust=0),
                                           strip.background=element_blank(),
 
-                                          axis.ticks.length=unit(1.5, 'mm'),
+                                          axis.ticks.length=unit(len_tick, 'cm'),
                                           axis.ticks.x=element_line(size=0.2, colour=gcol),
                                           axis.ticks.y=element_blank(),
 

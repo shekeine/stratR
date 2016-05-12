@@ -1,7 +1,7 @@
 #Build universal y axis facet
 #Returns grob object with universal age axis
 
-uniYaxis <- function(tym_brks, st_ht, glab_ht){
+uniYaxis <- function(tym_brks, st_ht, tstrip_h){
 
                                 #Observation time points
                                 tlevs <- unique(dat[, agebp])
@@ -18,11 +18,12 @@ uniYaxis <- function(tym_brks, st_ht, glab_ht){
 
                                   #New top margin, for some reason, Difference betw heights of top strip with group labels
                                   #and bottom strip with vartype labels needs to be discounted:: To investigate cleaner solution
-                                  diff_ht <- glab_ht-bs_ht
+                                  diff_ht <- tstrip_h-bs_ht
                                   tmar <- convertX(x=sum(pmargin[1], diff_ht), unitTo='cm')
 
                                   #New top margin
-                                  pmargin2 <- unit.c(tmar, pmargin[2], bmar, pmargin[4])
+                                  pmargin2 <- unit.c(tmar, pmargin[2], bmar,
+                                                     unit(as.numeric(pmargin[4]), 'cm'))
 
                                 #Build plot
                                 gg_axis <- ggplot(data=dat_i, aes(y=vals, x=x)) + facet_wrap(~var_ids) +
@@ -56,7 +57,7 @@ uniYaxis <- function(tym_brks, st_ht, glab_ht){
                                               axis.ticks.x=element_blank(),
                                               axis.text.x=element_text(size=axs_tsize, colour='transparent'),
                                               axis.ticks.y=element_line(size=0.2, colour='black'),
-                                              axis.ticks.length=unit(1.5, 'mm'),
+                                              axis.ticks.length=unit(len_tick, 'cm'),
                                               axis.text.y=element_text(size=axs_tsize)
                                             )
 
