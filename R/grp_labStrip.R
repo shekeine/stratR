@@ -2,7 +2,7 @@
 #Returns a heading strip with the appropriate aesthetics
 grp_labStrip <- function(dt, tsize, grplab=T){
 
-                  #Groups
+                  #Groupssfs
                   grps <- dt[, group]
 
                   #Make top strips for each plot
@@ -19,8 +19,7 @@ grp_labStrip <- function(dt, tsize, grplab=T){
 
                             #Make labeller plot
                             dat <- data.frame(x=1, y=1, lab=lab)
-                            gg_lab <-
-                            ggplot(data=dat, aes(x=x, y=y)) +
+                            gg_lab <- ggplot(data=dat, aes(x=x, y=y)) +
                                       facet_wrap(~lab) + geom_blank() +
 
                                       theme(

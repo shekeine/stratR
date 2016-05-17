@@ -1,0 +1,13 @@
+base
+knitr
+markdown
+data.table
+ggplot2
+gridExtra
+gtable
+plyr
+randomcoloR
+stratR
+foreach
+iterators
+doParallel

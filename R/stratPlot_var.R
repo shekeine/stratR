@@ -18,8 +18,8 @@ stratPlot_var <- function(dat_i){
                                   ylims2 <- as.numeric(dat_ctrl[variable==as.character(dat_i[, variable][1])][, list(ylim2)])
 
                                   #Get baseline position
-                                  xbline <- dat_ctrl[group==dat_i[, group][1] &
-                                                       variable==as.character(dat_i[, variable][1]), xbline]
+                                  grp_bline <- dat_ctrl[group==dat_i[, group][1] &
+                                                       variable==as.character(dat_i[, variable][1]), grp_bline]
 
                                   #Subset table to make line segments at age samples
                                   seg_dt <- data.table(x1=unique(dat[, agebp]),
@@ -97,7 +97,7 @@ stratPlot_var <- function(dat_i){
                                         geom_point(colour="grey40", size=0.2) +
 
                                         #Baseline
-                                        geom_abline(intercept=xbline, slope=0, size=0.2, colour="red", linetype=2) +
+                                        geom_abline(intercept=grp_bline, slope=0, size=0.2, colour="red", linetype=2, na.rm=T) +
 
                                         theme(
                                           plot.margin=pmargin,

@@ -1,7 +1,9 @@
-#stratPlot makes stratigraphic plots for the n variables in the input data
-#It ingests datList, a list with the original data split into n list items (variable-wise)
-#Returns facetted stratigraphic plot of with all the variables and-
-#-height of top strip that has group labels
+##'stratPlot_varlist
+#'
+##'makes stratigraphic plots for the n variables in the input data
+##'
+##'@param var_list, a list with the original data split into n list items (variable-wise)
+##'@return gridded stratigraphic plot of with all the variables and height of top strip that has group labels
 
 stratPlot_varlist <- function(var_list){
 
@@ -33,14 +35,9 @@ stratPlot_varlist <- function(var_list){
                               grob_grp$layout$z <- rev(grob_grp$layout$z)
 
                               #Append group labels as a top strip
-                                #Get height of strip
-#                                 grob_grp <- arrangeGrob(tstrip, grob_grp, ncol=1,
-#                                                         heights=unit.c(tstrip_h, unit(1, 'null')),
-#                                                         padding=unit(0, "cm"))
-                              grob_grp<-grob_grp
-                                grob_grp <- arrangeGrob(grob_grp, top=tstrip, clip=T, padding=tstrip_h)
+                              grob_grp <- arrangeGrob(grob_grp, top=tstrip, clip=T, padding=tstrip_h)
 
-                                ##Make variable type labeller strip (to be appended at the bottom)
+                                ##Make variable type labeller (to be appended at the bottom)
                                 if(length(grp_vartype) >= 1){
                                  bstrip <- grp_labStrip(dt=unique(dat_ctrl[,
                                                                            list(group, vartype, col)]),

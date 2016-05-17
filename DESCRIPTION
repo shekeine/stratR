@@ -1,17 +1,19 @@
 Package: stratR
 Type: Package
-Title: A package to generate visualisations and occurrence scores from stratigraphic data
+Title: A package to generate time-series plots and occurrence scores from
+    stratigraphic data
 Version: 0.1
 Date: 2016-02-25
 Authors@R: person("John", "Shekeine", email = "shekeinespere@gmail.com", role = c("aut", "cre"))
-Description: This package provides plotting functions to construct standard stratigraphic plots
-    based on the Grammar of Graphics implementation in R i.e., ggplot2. Most importantly,
-    it facilitates the creation of multi-facetted plots where fine control of plot parameters
-    e.g. axis breaks and labels, relative sizes of multiple facets is possible.
-    Plot aesthetics can be controlled easily using the traditional layering paradigm of ggplot2.
-    The package also provides several functions to compute occurrence scores for pollen data e.g.
-    biome and PFT scores.
-    For efficiency, all the data wrangling in this package is done using data.table.
+Description: This package provides plotting functions to construct standard
+    stratigraphic plots based on the Grammar of Graphics implementation in R i.e.,
+    ggplot2. Most importantly, it facilitates the creation of multi-facetted plots
+    where fine control of plot parameters e.g. axis breaks and labels, relative
+    sizes of multiple facets is possible. Plot aesthetics can be controlled easily
+    using the traditional layering paradigm of ggplot2. The package also provides
+    several functions to compute occurrence scores for pollen data e.g. biome and
+    PFT scores. For efficiency, all the data wrangling in this package is done using
+    data.table.
 Depends:
     R (>= 3.1),
     data.table,
@@ -20,7 +22,11 @@ Depends:
     grid,
     gtable (>= 0.1.1),
     plyr,
-    RColorBrewer
-Imports:
+    randomcoloR
+Imports: 
 License: GPL-2
 LazyData: TRUE
+RoxygenNote: 5.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

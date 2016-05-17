@@ -1,0 +1,561 @@
+---
+title: "stratR vignette"
+author: J. Shekeine
+date: "`r Sys.Date()`"
+tagline:  <a href="https://github.com/shekeine/stratR"><font size="2">stratR on github</font></a> 
+output:
+  html_document:
+    css: style.css
+    toc: yes
+    toc_depth: 6
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+---
+`r library(knitr)`
+`r library(markdown)`
+`r library(stratR)`
+`r opts_chunk$set(cache=T)`
+`r opts_chunk$set(dev.args=list(pointsize=12))`
+
+#Introduction
+
+***  
+
+This vignette illustrates, using practical examples, how to use the `stratR` 
+package to construct stratigraphic diagrams of multiple variables. Differences in 
+statistical properties amongst variables in large time-series datasets can make it 
+difficult visualise such datasets in a way that is accurate, legible and that allows 
+simultaneous comparison of all variables of interest. 
+
+`stratR` uses R's `ggplot2` and `gridExtra` libraries to build high quality 
+stratigraphic plots of multiple variables that are as well easily customisable. 
+It takes care of the numerous fiddly details that would make building such a plot 
+a nighmare and provides an intuitive function interface from which key plotting 
+parameters can be modified easily. Plotting is done using the `stratPlot` function. 
+See `?strapPlot` for full information on the function, its arguments etc.
+
+In addition to the plotting function, `stratR`, through its `hscorer` function, 
+provides  a fast way to compute occurence metrics such as percentages and scores 
+for paleoenviromental data. Like `stratPlot`, the function was designed with pollen 
+stratigraphic data in mind, but can be used on time-series data as well.
+
+***  
+##Plotting with stratPlot
+
+###Preparing your data  
+***
+####Load and describe input data  
+
+Usually, raw data that is to be plotted or analysed in R will be in the [wide](https://en.wikipedia.org/wiki/Wide_and_narrow_data)
+format i.e., samples run row-wise and each measured variable is in its own column.
+In this vignette, we'll start with a sample dataset that is originally in this format.
+Below, we load and inspect a sample dataset from `stratR` that is in the wide format.
+```{r}
+
+#Read sample data from stratR
+data("stratPlotData")
+
+#Print dimensions
+dim(stratPlotData)
+```
+
+This dataset contains 125 variables (columns) and 684 samples(rows). We know the 
+kind of data is in these columns a priori. For convinience in later steps, we can 
+define these variable types as follows:
+
+```{r}
+#Metadata columns
+metavars <- c('ids', 'entitynum', 'region', 'site',
+              'londd', 'latdd', 'altitude', 'samplenum', 'agebp')
+
+#Model output from some model
+modvars <- "minD"
+  
+#Rainfall anomalies
+precipvars <- c("JJAPdelta", "DJFPdelta")
+
+#Temperature anomalies
+tempvars <- c("JJATdelta", "DJFTdelta")
+
+```
+
+The rest of the columns, 670 in number, contain pollen percentages of 670 plant 
+taxa that were observed in various pollen cores, which are uniquley identified 
+by the `entitynum` column. Age levels at which pollen counts were observed in each 
+pollen core i.e., entitynum, are indicated in the column `agebp`.
+
+It would be too tedious to manually define what columns in the datasets constitute 
+pollen counts as done earlier with other variable types. Therefore, we can say 
+that every column not already in the metadata, model or climate variable lists 
+is a pollen variable.
+
+```{r}
+#Pollen variables
+pollvars <- names(stratPlotData)[!names(stratPlotData)%in%c(metavars, modvars, precipvars, tempvars)]
+```
+***
+####Reshape to long format  
+
+`stratPlot` expects the input dataset to be in long format. Currently, our input
+data is in the wide format. We need to "melt" it to long as follows.
+```{r}
+datL <- melt(data=stratPlotData, id.vars=metavars, variable.factor=F)
+```
+***
+####Define variable groups
+We then need to define the variable types in the data by adding a new column
+with grouping labels. Doing this will help determine how different variable
+types are aggregated and accorded plotting parameters.
+
+```{r}
+#Define variable groups
+datL[variable%in%precipvars, group:='Precipitation']
+datL[variable%in%tempvars, group:='Temperature']
+datL[variable%in%modvars, group:='Model']
+datL[variable%in%pollvars, group:='Pollen taxa']
+```
+
+The resulting data table now has:
+
+- the original metadata columns
+
+- a column named "variable" with the identities of all measured variables i.e., 
+climate, pollen, model variables
+
+- a column named "value" indicating the observed value for the respective measured
+variable.
+
+- a column named "group" indicating how the different variables are to be aggregated.
+
+We can get a peek of our reshaped data by running:
+
+```{r, eval=F, echo=T}
+head(datL)
+```
+***
+####Remove trace occurences
+Since the pollen percentages in the dataset are occurence data, we might want to 
+get rid of trace occurences e.g., by retaining only those pollen observations with
+rates above a certain thresh-hold, say, 1%. We can also get rid of columns we do 
+not wish to plot.
+
+```{r}
+
+#Subset pollen observations with rates equal to or above 1%
+poll_dt <- subset(x=datL, variable%in%pollvars & value >=1)
+
+#Fill every sample (time point) where a variable (pollen taxon) was not observed with zero
+poll_dt <- dcast(poll_dt,  ids + entitynum + 
+                     region + site + londd + latdd + altitude +
+                     samplenum + group + agebp ~ variable, value.var='value', fill=0)
+
+#Drop columns with data we dont want to plot, e.g., ones that represent unknown pollen taxa
+poll_dt[, NA.:=NULL]
+
+#Reshape pollen data back into the long format
+poll_dt <- melt(poll_dt, id.vars=c(metavars, 'group'))
+
+#Remove variables in each entity that do not occur at least once
+poll_dt[, n:=sum(value>0), .(entitynum, variable)]
+poll_dt <- poll_dt[n>=1]
+poll_dt[, n:=NULL]
+
+```
+
+Below, we subset and combine the now ready pollen data subset with the rest of 
+the variables.
+```{r}
+
+#Subset other non-pollen data i.e. climate and model variables
+oth_dt <- subset(x=datL, !variable%in%pollvars)
+
+#Merge processed pollen data with the other non-pollen data
+datL <- rbindlist(list(poll_dt, oth_dt), use.names=T)
+```
+***
+###Construct plot
+`stratPlot` ingests a dataset of class `data.table` with the aforedescribed 
+structure i.e., like `datL` and arguments to control how the output plot is built 
+and styled. Details of `statPlot`'s arguments and their meanings can be viewed in 
+the package's documentation with `?stratPlot`. Below are some examples illustrating 
+the function's arguments and potential use cases.
+
+***
+####Single plot
+Our sample data currently contains data for 3 entities i.e., pollen cores. The `ids` 
+column uniquely identifies each entity i.e., pollen core in the dataset and indicates 
+the region associated with each entity. To check what and how many entity `ids` are 
+in the dataset we can run:
+
+```{r}
+length(unique(datL[, ids]))  #Print number of unique entities
+unique(datL[, ids])          #Print labels of unique entities
+```
+
+Below, we subset only the data from the entity "Entity_33_Region_Europe", 
+which we'll use to generate a sample plot.
+
+```{r}
+datL_i <- subset(x=datL, ids=='Entity_33_Region_Europe')
+```
+
+The code below generates a stratigraphic plot of this subset. See `?stratPlot`
+for details on the arguments.
+
+```{r, eval=T}
+
+#Build plot
+plt_ls <- stratPlot(dat=datL,
+                   grpcol='group',
+                   tymcol='agebp', varcol='variable', valcol='value', varord=c('med'),
+                   grp_ord=c('Model', 'Precipitation', 'Temperature', 'Pollen taxa'),
+                   grp_colours=c('grey40', 'blue', 'brown3','darkgreen'),
+                   grp_geom=c('line', 'line', 'line','area'),
+                   grp_bline=c(NA, 20, "med", "med"),
+                   grp_vartype=c('MinD', 'SD', 'SD','Percentages'),
+                   grp_const=c('Model', 'Precipitation', 'Temperature'), 
+
+                   xbrkint=c(NA, NA, 5, NA),
+                   ybrkint=NA,
+
+                   axs_tsize=10, var_tsize=18, grp_tsize=25, ptt_tsize=20,
+
+                   plab='', ylab='Age BP',
+                   pmargin=unit(c(0.05, 0, 0.1, 0), 'cm'),
+                   maxw=5
+                  )
+
+#Get plot object
+plot_obj <- plt_ls$plot
+
+#Get plot width (in cm)
+plot_width <- plt_ls$width
+
+```
+
+The constructed plot can be viewed on the R graphics device in two quick lines.
+
+########{#wrapper}
+```{r, eval=T, fig.height=25/2.54, fig.width=plot_width/2.54}
+
+#Draw plot
+grid.newpage()
+grid.draw(plot_obj)
+
+```
+
+#######{#endCss}
+
+To write the plot to file for later viewing or use in articles etc, we can use 
+the `ggsave` function from `ggplot2` . To save to other formats, just change the 
+extension of the output file name to the desired type e.g., png, tif, etc. Here, 
+the plot is saved to the .pdf format.
+
+```{r, eval=T}
+
+#Save plot as pdf
+ggsave(filename=paste0("/tmp/", 'myplot.pdf'), plot=plot_obj,
+       limitsize=F, width=plot_width, height=25, units='cm')
+
+```
+
+***
+####Multiple plots
+To construct plots for multiple entities i.e., pollen cores, we can call `stratPlot` 
+from within a `for loop` that will build a collection stratigraphic plots: one for 
+each entity. These could be useful in various ways e.g., in comparing different 
+entities, or, in generating a library of plots that can be used in an interactive 
+map to query and view data at different locations.
+
+***
+#####Using sequential for loops
+Our main dataset contains 3 entities.
+
+```{r, eval=T}
+length(unique(datL[, ids]))  #Print number of unique entities
+unique(datL[, ids])          #Print labels of unique entities
+```
+
+Each entitity's data can be visualised using stratPlot with an ordinary for loop 
+as follows:
+
+```{r, eval=T}
+  for (entity in unique(stratPlotData[, ids])){
+    
+    #Isolate data for entity in the current iteration
+    dat_ent <- datL[ids==entity]
+    
+    #Build plot
+    plt_ls <- stratPlot(dat=dat_ent,
+                       grpcol='group',
+                       tymcol='agebp', varcol='variable', valcol='value', varord=c('med'),
+                       grp_ord=c('Model', 'Precipitation', 'Temperature', 'Pollen taxa'),
+                       grp_colours=c('grey40', 'blue', 'brown3','darkgreen'),
+                       grp_geom=c('line', 'line', 'line','area'),
+                       grp_bline=c(NA, 20, "med", "med"),
+                       grp_vartype=c('MinD', 'SD', 'SD','Percentages'),
+                       grp_const=c('Model', 'Precipitation', 'Temperature'), 
+    
+                       xbrkint=c(NA, NA, 5, NA),
+                       ybrkint=NA,
+    
+                       axs_tsize=10, var_tsize=18, grp_tsize=25, ptt_tsize=20,
+    
+                       plab=entity, ylab='Age BP',               #Note plab value here
+                       pmargin=unit(c(0.05, 0, 0.1, 0), 'cm'),
+                       maxw=5
+                      )
+    
+    #Get plot object
+    plot_obj <- plt_ls$plot
+      
+    #Get plot width (in cm)
+    plot_width <- plt_ls$width
+    
+    #Make filename, replace "/tmp/" with the path you want your plots saved
+    fname <- paste0("/tmp/", entity, ".pdf")
+    
+    #Save plot as pdf
+    ggsave(filename=fname, plot=plot_obj,
+           limitsize=F, width=plot_width, height=25, units='cm')
+
+}
+
+```
+
+***
+#####Using parallel for loops
+In addition to the ordinary for loops, we can also exploit R's parallel processing 
+capabilities to speed up the generation of multiple plots. Note that 
+to construct just one or two plots, an ordinary (sequential) `for loop`  should be 
+preffered for reasons explained [here](http://stackoverflow.com/questions/14614306/why-is-the-parallel-package-slower-than-just-using-apply.)
+As the number of plots to construct increases, say, beyond 5, running the task in 
+parallel becomes a lot more efficient compared running the task sequanetially as 
+the standard `for` loop does in R.
+
+```{r, eval=T}
+  #Load libraries for parallel processing
+  library('parallel')
+  library('foreach')
+  library('doParallel')
+
+  #Register cluster for parallel processing
+  cl <- makeCluster(detectCores() - 1)
+  registerDoParallel(cl, cores = detectCores() - 1)
+  
+  #Parallel for loop
+  plotList <- foreach (entity=unique(stratPlotData[, ids]), .packages="stratR", .combine='c') %dopar% {
+    
+    #Isolate data for entity in the current iteration
+    dat_ent <- datL[ids==entity]
+    
+    #Build plot
+    plt_ls <- stratPlot(dat=dat_ent,
+                       grpcol='group',
+                       tymcol='agebp', varcol='variable', valcol='value', varord=c('med'),
+                       grp_ord=c('Model', 'Precipitation', 'Temperature', 'Pollen taxa'),
+                       grp_colours=c('grey40', 'blue', 'brown3','darkgreen'),
+                       grp_geom=c('line', 'line', 'line','area'),
+                       grp_bline=c(NA, 20, "med", "med"),
+                       grp_vartype=c('MinD', 'SD', 'SD','Percentages'),
+                       grp_const=c('Model', 'Precipitation', 'Temperature'), 
+    
+                       xbrkint=c(NA, NA, 5, NA),
+                       ybrkint=NA,
+    
+                       axs_tsize=10, var_tsize=18, grp_tsize=25, ptt_tsize=20,
+    
+                       plab=entity, ylab='Age BP',               #Note plab value here
+                       pmargin=unit(c(0.05, 0, 0.1, 0), 'cm'),
+                       maxw=5
+                      )
+    #Get result
+    res <- list(plt_ls) 
+    names(res) <- entity
+    return(res)
+  }
+  stopCluster(cl)
+```
+
+The object `plotList` created above is a nested list object containing a plot object 
+for each entity processed as well as the respective width. Below, we access each 
+plot object in the list and save it to disk at the respective width.
+
+```{r, eval=T}
+
+ #Write plot objects to file  
+ for (entity in names(plotList)){
+  
+  #Get plot object in current iteration
+  plot_obj <- plotList[[entity]]$plot
+    
+  #Get plot width (in cm)
+  plot_width <- plotList[[entity]]$width
+  
+  #Make filename, replace "/tmp/" with the path you want your plots saved
+  fname <- paste0("/tmp/", entity, "_par_.pdf")
+  
+  #Save plot as pdf
+  ggsave(filename=fname, plot=plot_obj,
+         limitsize=F, width=plot_width, height=25, units='cm')
+ }
+```
+
+***
+##Computing biome, pft scores with hscorer
+***
+The function `hscorer` computes pollen scores based on biome, PFT or other schemes.
+Though built for pollen data, it can be used or adapted for use to calculate 
+occurence metrics for other paleoenvironmental data as well.
+
+####Preparing data
+This function's documentation (see `?hscorer`) explains the expected inputs datasets 
+and what structure they should have. Here, we'll get straight to work. `stratR` 
+contains sample datasets that can be used as input for `hscorer` We can load them 
+as follows:
+
+```{r}
+#Load sample pollen counts
+data(p_counts) #Load a sample pcounts table (data.table of pollen counts)
+head(p_counts) #Inspect: This dataset correponds to the expected value of the `pcounts` argument
+```
+
+Below, we load sample biomisation and pft schemes. Note that the object `hschemes` 
+being loaded below is a collection of several schemes (several tables)
+```{r, echo=F, eval=F}
+#Load sample pft and biomisation schemes
+data(hschemes)         #Load a bunch of sample pft and biomisation schemes
+print(hschemes)        #Each table correponds to the expected value of the `hscheme` argument
+print(names(hschemes)) #See what biomisation schemes are available
+```
+
+***
+####Single scheme
+Calculating biome, pft or any other kind of occurence metrics using a single scheme 
+is as simple as laid out below. Note that here, we have a collection of schemes so 
+the first line just gets us the one we want from the whole bunch e.g. the 
+Peyron biome scheme.
+
+```{r, echo=F, eval=F}
+    #Isolate peyron biome scheme
+    peyron_bs    <- hschemes$Peyron_biome_scheme
+
+    #Calculte biome scores, and by default, percentages
+    percs_scores <- hscorer(pcounts=p_counts, hscheme=peyron_bs)
+    
+    #Inspect output
+    print(percs_scores)
+```
+
+As outlined in `hscorer` documentation (see`?hscorer`) the output value, 
+`percs_scores` in this case, contains percentages and scores for the pollen data 
+as per the scheme used: Peyron's biome scheme in this example.
+
+***
+####Multiple schemes
+Occurence metrics can also be computed based on multiple schemes by using a `for` 
+loop that iterates over the different schemes we have, outputting a result based 
+on each scheme. The snippet below illustrates a use case where we want to generate 
+occurence metrics based on several schemes.
+
+```{r}
+
+for(scheme in names(hschemes)){
+    
+    #Get i'th bscheme
+    hscheme_i <- hschemes[[scheme]]
+    
+    #Compute occurence percentages and scores based on i'th scheme
+    percs_scores_i  <- hscorer(pcounts=p_counts, hscheme=hscheme_i)
+    
+    #Make filenames, replace "/tmp/" with the path where you want your plots saved
+    fname_percs <- paste0("/tmp/", "percentages_", scheme, ".csv")
+    fname_scores <- paste0("/tmp/", "scores_", scheme, ".csv")
+    
+    #Write percentages to file
+    write.csv(x=percs_scores_i$percentages, file=fname_percs, row.names=F)
+    
+    #Write occurence scores to file
+    write.csv(x=percs_scores_i$scores, file=fname_scores, row.names=F)
+  }
+```
+
+***
+####Plotting output with stratPlot
+In conclusion, outputs from `hscorer` can be readily visualised with the `stratPlot` function. 
+Below, we compute PFT percentages based on Peyron`s PFT scheme and plot the result 
+with `stratPlot`.
+
+```{r}
+
+#Isolate peyron pft scheme
+peyron_pft <- hschemes$Peyron_pft_scheme
+
+#Compute taxon percentages
+peyron_percs <- hscorer(pcounts=p_counts, hscheme=peyron_pft)$percentages
+
+#Get the data ready for stratPlot
+
+  #Subset data for just one entity
+  dat <- peyron_percs[entitynum==221]
+  
+  #Melt to long format
+  datm <- melt(dat, id.vars=c("entitynum", "samplenum"), variable.name="PFT")
+  
+  #Remove trace occurences (less than 1% rate)
+  datm <- datm[value>1]
+  
+  #Fill every sample (time point) where a PFT was not observed with zero
+  datm <- dcast(datm,  entitynum + samplenum ~ PFT, value.var='value', fill=0)
+  
+  #Reshape pollen data back into the long format
+  datm <- melt(datm, id.vars=c("entitynum", 'samplenum'), variable.name="PFT")
+```
+
+We now need to add a grouping variable as expected by `stratPlot`. For demo 
+purposes, we'll just lump all the PFT's in one artificial group. However, one 
+could, for example, add biome data from a pft to biome translation table as the 
+grouping variable so that the time-series of PFT percentages are plotted by biome.
+
+```{r}
+datm[, group:="Plant functional types"]
+```
+
+Finally, we can construct the plot as illustrated earlier as follows.
+
+```{r, eval=T}
+#Plot
+plt_ls <- stratPlot(dat=datm,
+                       grpcol='group',
+                       tymcol='samplenum', varcol='PFT', valcol='value', varord=c('med'),
+                       grp_geom=c('area'),
+                       grp_bline=0,
+                       grp_vartype="Percentages",
+                       grp_colours="darkgreen",
+
+                       axs_tsize=10, var_tsize=18, grp_tsize=16, ptt_tsize=18,
+    
+                       plab="Entity 506", ylab='Sample',
+                       pmargin=unit(c(0.05, 0, 0.1, 0), 'cm'),
+                       maxw=5
+                      )
+#Get plot object
+plot_obj <- plt_ls$plot
+
+#Get plot width (in cm)
+plot_width <- plt_ls$width
+```
+
+The generated plot can then be on the R device as follows.
+
+########{#wrapper2}
+```{r, eval=T, fig.height=20/2.54, fig.width=plot_width/2.54}
+
+#Draw plot
+grid.newpage()
+grid.draw(plot_obj)
+
+```
+
+#######{#endCss}
