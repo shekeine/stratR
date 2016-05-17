@@ -15,7 +15,7 @@ output:
 `r library(knitr)`
 `r library(markdown)`
 `r library(stratR)`
-`r opts_chunk$set(cache=T)`
+`r opts_chunk$set(cache=F)`
 `r opts_chunk$set(dev.args=list(pointsize=12))`
 
 #Introduction
