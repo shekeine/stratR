@@ -87,7 +87,16 @@ stratPlot <- function(dat=dat,
               setnames(x=dat, old=c(tymcol, varcol, valcol, grpcol),
                        new=c('agebp', 'variable', 'value', 'group'))
 
+              #Reset values of column name arguments to new column names set above
+              nms <- c('tymcol', 'varcol', 'valcol', 'grpcol')
+              cnms <- c('agebp', 'variable', 'value', 'group')
+              for (nm in 1:length(nms)){assign(x=nms[nm], value=cnms[nm])}
+              print(tymcol)
+              print(grpcol)
+
               #Subset and order as per grp_ord argument
+              print("Error catch")
+
               dat <- dat[group%in%grp_ord, ]
 
               #Remove variables that do not occur at least once
